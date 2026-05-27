@@ -3,7 +3,7 @@ import Papa from 'papaparse';
 import { UploadCloud, FileText, Download, FilePlus2, Search, CheckCircle, XCircle, X, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CSVLead, ProcessedLead } from '../types';
 import { calculatePurchaseProbability } from '../utils/predict';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase';
 
 interface MassivePredictionProps {
@@ -45,13 +45,20 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
           prediction: predictions[idx]
         }));
 
-        // Save to Firebase
+        // Save to Firebase (Optimized with Batches)
         try {
-          const promises = processed.map(lead => {
-            if (!lead.id_user) return Promise.resolve();
-            return setDoc(doc(db, 'leads', lead.id_user), lead);
-          });
-          await Promise.all(promises);
+          const BATCH_SIZE = 500;
+          for (let i = 0; i < processed.length; i += BATCH_SIZE) {
+            const chunk = processed.slice(i, i + BATCH_SIZE);
+            const batch = writeBatch(db);
+            chunk.forEach(lead => {
+              if (lead.id_user) {
+                const docRef = doc(db, 'leads', lead.id_user);
+                batch.set(docRef, lead);
+              }
+            });
+            await batch.commit();
+          }
         } catch (e) {
           console.error("Error saving to Firebase:", e);
         }
