@@ -1,11 +1,11 @@
-id_user,asistencia_webinars,clicks_bolsa_trabajo,situacion_laboral,clicks_marketing,profesion
-USR001,3_o_mas,mas_de_5,independiente,alta,Abogado
-USR002,1_a_2,0_clicks,sector_privado,nula,Ingeniero
-USR003,0_eventos,1_a_5,sector_publico,media,Administrador
-USR004,3_o_mas,mas_de_5,sector_publico,alta,Economista
-USR005,0_eventos,0_clicks,sector_privado,nula,Arquitecto
-USR006,1_a_2,1_a_5,independiente,media,Contador
-USR007,3_o_mas,1_a_5,sector_publico,alta,Abogado
-USR008,1_a_2,mas_de_5,sector_publico,media,Administrador
-USR009,0_eventos,0_clicks,independiente,nula,Profesor
-USR010,3_o_mas,0_clicks,sector_privado,alta,Economista
+id_user,asistencia_webinars,clicks_bolsa_trabajo,situacion_laboral,clicks_marketing,profesion,recencia_interaccion,cliente_antiguo,ubicacion_region,tipo_entidad_interes,estado_postulacion_historica
+USR001,3_o_mas,mas_de_5,independiente,alta,Abogado,5,1,Lima,Ministerios/Poder Ejecutivo,Postulante frecuente
+USR002,1_a_2,0_clicks,sector_privado,nula,Ingeniero,45,0,Callao,Gobierno Regional,Solo visualizador
+USR003,0_eventos,1_a_5,sector_publico,media,Administrador,15,1,Cusco,Municipalidades,Finalista/Seleccionado
+USR004,3_o_mas,mas_de_5,sector_publico,alta,Economista,2,1,Arequipa,Municipalidades,Postulante frecuente
+USR005,0_eventos,0_clicks,sector_privado,nula,Arquitecto,120,0,Piura,Organismos Autónomos,Solo visualizador
+USR006,1_a_2,1_a_5,independiente,media,Contador,30,0,Lima,Gobierno Regional,Postulante frecuente
+USR007,3_o_mas,1_a_5,sector_publico,alta,Abogado,10,1,Cusco,Ministerios/Poder Ejecutivo,Finalista/Seleccionado
+USR008,1_a_2,mas_de_5,sector_publico,media,Administrador,20,0,Arequipa,Municipalidades,Postulante frecuente
+USR009,0_eventos,0_clicks,independiente,nula,Profesor,200,0,Piura,Otro,Solo visualizador
+USR010,3_o_mas,0_clicks,sector_privado,alta,Economista,1,1,Lima,Organismos Autónomos,Finalista/Seleccionado

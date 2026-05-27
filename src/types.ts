@@ -4,6 +4,11 @@ export interface UserData {
   employmentSector: 'public' | 'private' | 'unemployed';
   marketingInteractions: number; // 0: None, 1: Low, 2: High
   profession: 'high_affinity' | 'medium_affinity' | 'low_affinity'; 
+  recencia_interaccion: number;
+  cliente_antiguo: number; // 1 | 0
+  ubicacion_region: string;
+  tipo_entidad_interes: string;
+  estado_postulacion_historica: string;
 }
 
 export interface PredictionResult {
@@ -15,7 +20,7 @@ export interface PredictionResult {
     points: number;
   }[];
   recommendation: string;
-  status: 'Hot' | 'Warm' | 'Cold';
+  status: 'Sí' | 'No';
 }
 
 export interface CSVLead {
@@ -25,6 +30,11 @@ export interface CSVLead {
   situacion_laboral: string;
   clicks_marketing: string;
   profesion: string;
+  recencia_interaccion: number;
+  cliente_antiguo: number;
+  ubicacion_region: string;
+  tipo_entidad_interes: string;
+  estado_postulacion_historica: string;
 }
 
 export interface ProcessedLead extends CSVLead {

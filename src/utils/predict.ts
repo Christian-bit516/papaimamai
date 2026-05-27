@@ -64,5 +64,10 @@ export function manualDataToCSVLead(data: UserData): CSVLead {
     situacion_laboral:    sectorMap[data.employmentSector]     ?? 'independiente',
     clicks_marketing:     marketingMap[data.marketingInteractions] ?? 'nula',
     profesion:            profMap[data.profession]             ?? 'Profesor',
+    recencia_interaccion: data.recencia_interaccion ?? 30,
+    cliente_antiguo: data.cliente_antiguo ?? 0,
+    ubicacion_region: data.ubicacion_region ?? 'Lima',
+    tipo_entidad_interes: data.tipo_entidad_interes ?? 'Ministerios/Poder Ejecutivo',
+    estado_postulacion_historica: data.estado_postulacion_historica ?? 'Solo visualizador',
   };
 }

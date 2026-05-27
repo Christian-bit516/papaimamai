@@ -4,13 +4,13 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   LineChart, Line, BarChart, Bar
 } from 'recharts';
-import { Flame, Thermometer, Snowflake, TrendingUp, Users, Target, Percent } from 'lucide-react';
+import { CheckCircle, XCircle, TrendingUp, Users, Target, Percent } from 'lucide-react';
 
 interface AnalyticsChartsProps {
   data: ProcessedLead[];
 }
 
-const COLORS = { Hot: '#ff763a', Warm: '#eab308', Cold: '#3b82f6' };
+const COLORS = { Si: '#10b981', No: '#ef4444' };
 
 export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
   if (!data.length) {
@@ -23,13 +23,12 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
     );
   }
 
-  const hotCount  = data.filter(d => d.prediction?.status === 'Hot').length;
-  const warmCount = data.filter(d => d.prediction?.status === 'Warm').length;
-  const coldCount = data.filter(d => d.prediction?.status === 'Cold').length;
+  const siCount = data.filter(d => d.prediction?.status === 'Sí').length;
+  const noCount = data.filter(d => d.prediction?.status === 'No').length;
   const total     = data.length;
 
   const avgProb = (data.reduce((acc, c) => acc + (c.prediction?.probability || 0), 0) / total).toFixed(1);
-  const convRate = ((hotCount / total) * 100).toFixed(1);
+  const convRate = ((siCount / total) * 100).toFixed(1);
 
   // Probability distribution buckets
   const buckets = { '0-20%': 0, '21-40%': 0, '41-60%': 0, '61-80%': 0, '81-100%': 0 };
@@ -45,24 +44,23 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
 
   // Pie
   const pieData = [
-    { name: 'Hot',  value: hotCount,  color: COLORS.Hot  },
-    { name: 'Warm', value: warmCount, color: COLORS.Warm },
-    { name: 'Cold', value: coldCount, color: COLORS.Cold },
+    { name: 'Sí',  value: siCount,  color: COLORS.Si  },
+    { name: 'No',  value: noCount,  color: COLORS.No },
   ];
 
-  // Top 5 Hot leads
-  const topHot = [...data]
-    .filter(d => d.prediction?.status === 'Hot')
+  // Top 5 Si leads
+  const topSi = [...data]
+    .filter(d => d.prediction?.status === 'Sí')
     .sort((a, b) => (b.prediction?.probability || 0) - (a.prediction?.probability || 0))
     .slice(0, 5);
 
-  // Profession breakdown
-  const profMap: Record<string, number> = {};
+  // Entidad breakdown
+  const entidadMap: Record<string, number> = {};
   data.forEach(d => {
-    const p = d.profesion || 'Desconocido';
-    profMap[p] = (profMap[p] || 0) + 1;
+    const p = d.tipo_entidad_interes || 'Desconocido';
+    entidadMap[p] = (entidadMap[p] || 0) + 1;
   });
-  const profData = Object.entries(profMap)
+  const entidadData = Object.entries(entidadMap)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6)
     .map(([name, count]) => ({ name, count }));
@@ -88,12 +86,12 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
         </div>
 
         <div className="glass-panel kpi-card">
-          <div className="kpi-title"><Flame size={13} style={{ display: 'inline', marginRight: 4 }} />Leads Hot</div>
+          <div className="kpi-title"><CheckCircle size={13} style={{ display: 'inline', marginRight: 4 }} />Leads 'Sí'</div>
           <div className="kpi-content">
-            <div className="kpi-value glow-orange">{hotCount}</div>
+            <div className="kpi-value glow-green" style={{color: '#10b981'}}>{siCount}</div>
             <div style={{ width: 60, height: 30 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={spark(6)}><Line type="monotone" dataKey="v" stroke="#fb923c" strokeWidth={2} dot={false} /></LineChart>
+                <LineChart data={spark(6)}><Line type="monotone" dataKey="v" stroke="#10b981" strokeWidth={2} dot={false} /></LineChart>
               </ResponsiveContainer>
             </div>
           </div>
@@ -134,8 +132,8 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
               <AreaChart data={areaData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#ff763a" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#ff763a" stopOpacity={0} />
+                    <stop offset="5%"  stopColor="#10b981" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
@@ -144,9 +142,9 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
                 <RechartsTooltip
                   contentStyle={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 8 }}
                   labelStyle={{ color: 'white' }}
-                  itemStyle={{ color: '#fb923c' }}
+                  itemStyle={{ color: '#10b981' }}
                 />
-                <Area type="monotone" dataKey="uv" stroke="#ff763a" strokeWidth={3} fillOpacity={1} fill="url(#areaGrad)" name="Leads" />
+                <Area type="monotone" dataKey="uv" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#areaGrad)" name="Leads" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -187,20 +185,20 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
 
       {/* Bottom Row */}
       <div className="chart-grid">
-        {/* Top Hot Leads */}
+        {/* Top Si Leads */}
         <div className="glass-panel chart-card">
           <div className="chart-header" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Flame size={16} color="#fb923c" /> Top Leads a Contactar
+            <CheckCircle size={16} color="#10b981" /> Top Leads a Contactar
           </div>
-          {topHot.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>No hay leads Hot en el dataset actual.</p>
+          {topSi.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>No hay leads con predicción "Sí" en el dataset actual.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {topHot.map((lead, i) => {
+              {topSi.map((lead, i) => {
                 const prob = lead.prediction?.probability || 0;
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,118,58,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fb923c', fontWeight: 700, fontSize: '0.82rem', flexShrink: 0 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', fontWeight: 700, fontSize: '0.82rem', flexShrink: 0 }}>
                       {i + 1}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -209,9 +207,9 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                       <div style={{ width: 70, height: 5, background: 'rgba(255,255,255,0.07)', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${prob}%`, background: '#ff763a', borderRadius: 3 }} />
+                        <div style={{ height: '100%', width: `${prob}%`, background: '#10b981', borderRadius: 3 }} />
                       </div>
-                      <span style={{ color: '#fb923c', fontWeight: 700, fontSize: '0.88rem', width: 36 }}>{prob}%</span>
+                      <span style={{ color: '#10b981', fontWeight: 700, fontSize: '0.88rem', width: 36 }}>{prob}%</span>
                     </div>
                   </div>
                 );
@@ -220,16 +218,16 @@ export function AnalyticsCharts({ data }: AnalyticsChartsProps) {
           )}
         </div>
 
-        {/* Profession Breakdown Bar Chart */}
+        {/* Entidad Breakdown Bar Chart */}
         <div className="glass-panel chart-card">
           <div className="chart-header" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Users size={16} color="var(--text-muted)" /> Leads por Profesión
+            <Target size={16} color="var(--text-muted)" /> Interés por Tipo de Entidad
           </div>
           <div style={{ height: 200 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={profData} layout="vertical" margin={{ top: 0, right: 10, left: 10, bottom: 0 }}>
+              <BarChart data={entidadData} layout="vertical" margin={{ top: 0, right: 10, left: 10, bottom: 0 }}>
                 <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
-                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#cbd5e1', fontSize: 11 }} width={80} />
+                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#cbd5e1', fontSize: 11 }} width={110} />
                 <RechartsTooltip
                   contentStyle={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 8 }}
                   labelStyle={{ color: 'white' }}

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import Papa from 'papaparse';
-import { UploadCloud, FileText, Download, FilePlus2, Search, Flame, Thermometer, Snowflake, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { UploadCloud, FileText, Download, FilePlus2, Search, CheckCircle, XCircle, X, ChevronUp, ChevronDown } from 'lucide-react';
 import type { CSVLead, ProcessedLead } from '../types';
 import { calculatePurchaseProbability } from '../utils/predict';
 import { doc, setDoc } from 'firebase/firestore';
@@ -16,7 +16,7 @@ type SortDir = 'asc' | 'desc';
 
 export function MassivePrediction({ data, setData }: MassivePredictionProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<'All' | 'Hot' | 'Warm' | 'Cold'>('All');
+  const [filterStatus, setFilterStatus] = useState<'Todos' | 'Sí' | 'No'>('Todos');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('id_user');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -76,7 +76,7 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
 
   // Filter + Search + Sort
   const filteredData = data
-    .filter(lead => filterStatus === 'All' || lead.prediction?.status === filterStatus)
+    .filter(lead => filterStatus === 'Todos' || lead.prediction?.status === filterStatus)
     .filter(lead => {
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
@@ -97,7 +97,6 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
         aVal = a.id_user || '';
         bVal = b.id_user || '';
         
-        // Smart numeric sort for IDs (e.g. USR2 vs USR10)
         const aNumMatch = String(aVal).match(/\d+/);
         const bNumMatch = String(bVal).match(/\d+/);
         
@@ -121,7 +120,6 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
       return 0;
     });
 
-  // Download current filtered view as CSV
   const downloadCSV = () => {
     const csvData = filteredData.map(l => ({
       id_user: l.id_user,
@@ -130,8 +128,13 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
       situacion_laboral: l.situacion_laboral,
       clicks_marketing: l.clicks_marketing,
       profesion: l.profesion,
+      recencia_interaccion: l.recencia_interaccion,
+      cliente_antiguo: l.cliente_antiguo,
+      ubicacion_region: l.ubicacion_region,
+      tipo_entidad_interes: l.tipo_entidad_interes,
+      estado_postulacion_historica: l.estado_postulacion_historica,
       probabilidad_compra: (l.prediction?.probability || 0) + '%',
-      estado: l.prediction?.status || 'Cold',
+      estado: l.prediction?.status || 'No',
       recomendacion: l.prediction?.recommendation || ''
     }));
     const csv = Papa.unparse(csvData);
@@ -139,7 +142,7 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    const filterLabel = filterStatus === 'All' ? 'todos' : filterStatus.toLowerCase();
+    const filterLabel = filterStatus === 'Todos' ? 'todos' : filterStatus.toLowerCase();
     link.setAttribute('download', `leads_${filterLabel}_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
@@ -151,9 +154,8 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
     return sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />;
   };
 
-  const hotCount = data.filter(d => d.prediction?.status === 'Hot').length;
-  const warmCount = data.filter(d => d.prediction?.status === 'Warm').length;
-  const coldCount = data.filter(d => d.prediction?.status === 'Cold').length;
+  const siCount = data.filter(d => d.prediction?.status === 'Sí').length;
+  const noCount = data.filter(d => d.prediction?.status === 'No').length;
 
   if (!data.length) {
     return (
@@ -180,9 +182,11 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
             <>
               <h3>Arrastra tu dataset de leads</h3>
               <p>Suelta un archivo CSV aquí o haz clic para buscarlo</p>
-              <div className="csv-columns-hint">
+              <div className="csv-columns-hint" style={{display:'flex', flexWrap:'wrap', justifyContent:'center'}}>
                 <span>id_user</span><span>asistencia_webinars</span><span>clicks_bolsa_trabajo</span>
                 <span>situacion_laboral</span><span>clicks_marketing</span><span>profesion</span>
+                <span>recencia_interaccion</span><span>cliente_antiguo</span><span>ubicacion_region</span>
+                <span>tipo_entidad_interes</span><span>estado_postulacion_historica</span>
               </div>
             </>
           )}
@@ -200,17 +204,13 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
           <FileText size={16} />
           <span>{data.length} leads totales</span>
         </div>
-        <div className="stat-pill hot" onClick={() => setFilterStatus(filterStatus === 'Hot' ? 'All' : 'Hot')}>
-          <Flame size={16} />
-          <span>{hotCount} Hot</span>
+        <div className="stat-pill hot" onClick={() => setFilterStatus(filterStatus === 'Sí' ? 'Todos' : 'Sí')} style={{background: filterStatus === 'Sí' ? 'rgba(16, 185, 129, 0.2)' : ''}}>
+          <CheckCircle size={16} color="#10b981" />
+          <span style={{color: '#10b981'}}>{siCount} Sí</span>
         </div>
-        <div className="stat-pill warm" onClick={() => setFilterStatus(filterStatus === 'Warm' ? 'All' : 'Warm')}>
-          <Thermometer size={16} />
-          <span>{warmCount} Warm</span>
-        </div>
-        <div className="stat-pill cold" onClick={() => setFilterStatus(filterStatus === 'Cold' ? 'All' : 'Cold')}>
-          <Snowflake size={16} />
-          <span>{coldCount} Cold</span>
+        <div className="stat-pill cold" onClick={() => setFilterStatus(filterStatus === 'No' ? 'Todos' : 'No')} style={{background: filterStatus === 'No' ? 'rgba(239, 68, 68, 0.2)' : ''}}>
+          <XCircle size={16} color="#ef4444" />
+          <span style={{color: '#ef4444'}}>{noCount} No</span>
         </div>
         <span style={{ flex: 1 }} />
         {/* Action buttons */}
@@ -242,13 +242,14 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
         </div>
 
         <div className="filter-tabs">
-          {(['All', 'Hot', 'Warm', 'Cold'] as const).map(status => (
+          {(['Todos', 'Sí', 'No'] as const).map(status => (
             <button
               key={status}
-              className={`filter-tab ${filterStatus === status ? 'active-' + status.toLowerCase() : ''}`}
+              className={`filter-tab ${filterStatus === status ? 'active' : ''}`}
+              style={filterStatus === status ? {background: 'rgba(255,255,255,0.1)', color: 'white'} : {}}
               onClick={() => setFilterStatus(status)}
             >
-              {status === 'All' ? 'Todos' : status}
+              {status}
             </button>
           ))}
         </div>
@@ -264,42 +265,42 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
           <table className="leads-table">
             <thead>
               <tr>
-                <th onClick={() => handleSort('id_user')} className="sortable">
-                  ID Usuario <SortIcon col="id_user" />
-                </th>
-                <th onClick={() => handleSort('profesion')} className="sortable">
-                  Profesión <SortIcon col="profesion" />
-                </th>
-                <th onClick={() => handleSort('situacion_laboral')} className="sortable">
-                  Sector <SortIcon col="situacion_laboral" />
-                </th>
-                <th>Bolsa de Trabajo</th>
+                <th onClick={() => handleSort('id_user')} className="sortable">ID Usuario <SortIcon col="id_user" /></th>
+                <th onClick={() => handleSort('profesion')} className="sortable">Profesión <SortIcon col="profesion" /></th>
+                <th onClick={() => handleSort('situacion_laboral')} className="sortable">Sector <SortIcon col="situacion_laboral" /></th>
+                <th>Región</th>
+                <th>Recencia</th>
                 <th>Asistencia</th>
+                <th>Bolsa Trabajo</th>
                 <th>Marketing</th>
-                <th onClick={() => handleSort('probability')} className="sortable">
-                  Probabilidad <SortIcon col="probability" />
-                </th>
+                <th>Cliente Ant.</th>
+                <th>Entidad Int.</th>
+                <th>Hist. Postulación</th>
+                <th onClick={() => handleSort('probability')} className="sortable">Probabilidad <SortIcon col="probability" /></th>
                 <th>Estado</th>
               </tr>
             </thead>
             <tbody>
               {filteredData.map((lead, idx) => {
                 const prob = lead.prediction?.probability || 0;
-                const status = lead.prediction?.status || 'Cold';
+                const status = lead.prediction?.status || 'No';
                 return (
                   <tr key={idx} className="table-row">
                     <td><span className="id-badge">{lead.id_user}</span></td>
                     <td style={{ textTransform: 'capitalize' }}>{lead.profesion || '—'}</td>
                     <td style={{ textTransform: 'capitalize' }}>{(lead.situacion_laboral || '—').replace(/_/g, ' ')}</td>
                     <td>
-                      <span className="tag">{lead.clicks_bolsa_trabajo || '—'}</span>
+                      <span className="tag">{lead.ubicacion_region || '—'}</span>
                     </td>
                     <td>
-                      <span className="tag">{(lead.asistencia_webinars || '—').replace(/_/g, ' ')}</span>
+                      <span className="tag">{lead.recencia_interaccion !== undefined ? `${lead.recencia_interaccion}d` : '—'}</span>
                     </td>
-                    <td>
-                      <span className="tag">{lead.clicks_marketing || '—'}</span>
-                    </td>
+                    <td><span className="tag">{(lead.asistencia_webinars || '—').replace(/_/g, ' ')}</span></td>
+                    <td><span className="tag">{lead.clicks_bolsa_trabajo || '—'}</span></td>
+                    <td><span className="tag">{lead.clicks_marketing || '—'}</span></td>
+                    <td><span className="tag">{lead.cliente_antiguo == 1 ? 'Sí' : 'No'}</span></td>
+                    <td><span className="tag">{lead.tipo_entidad_interes || '—'}</span></td>
+                    <td><span className="tag">{lead.estado_postulacion_historica || '—'}</span></td>
                     <td>
                       <div className="prob-cell">
                         <div className="prob-bar-bg">
@@ -307,7 +308,7 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
                             className="prob-bar-fill"
                             style={{
                               width: prob + '%',
-                              background: prob >= 70 ? 'var(--accent-orange)' : prob >= 40 ? '#eab308' : '#3b82f6'
+                              background: status === 'Sí' ? '#10b981' : '#ef4444'
                             }}
                           />
                         </div>
@@ -315,10 +316,12 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
                       </div>
                     </td>
                     <td>
-                      <span className={`status-badge status-${status.toLowerCase()}`}>
-                        {status === 'Hot' && <Flame size={11} />}
-                        {status === 'Warm' && <Thermometer size={11} />}
-                        {status === 'Cold' && <Snowflake size={11} />}
+                      <span className="status-badge" style={{
+                          background: status === 'Sí' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                          color: status === 'Sí' ? '#10b981' : '#ef4444'
+                      }}>
+                        {status === 'Sí' && <CheckCircle size={11} />}
+                        {status === 'No' && <XCircle size={11} />}
                         {status}
                       </span>
                     </td>
