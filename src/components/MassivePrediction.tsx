@@ -3,7 +3,7 @@ import Papa from 'papaparse';
 import { UploadCloud, FileText, Download, FilePlus2, Search, CheckCircle, XCircle, X, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CSVLead, ProcessedLead } from '../types';
 import { calculatePurchaseProbability } from '../utils/predict';
-import { doc, setDoc, writeBatch } from 'firebase/firestore';
+import { doc, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase';
 
 interface MassivePredictionProps {
