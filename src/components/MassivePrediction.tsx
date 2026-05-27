@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Papa from 'papaparse';
-import { UploadCloud, FileText, Download, FilePlus2, Search, CheckCircle, XCircle, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { UploadCloud, FileText, Download, FilePlus2, Search, CheckCircle, XCircle, X, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CSVLead, ProcessedLead } from '../types';
 import { calculatePurchaseProbability } from '../utils/predict';
 import { doc, setDoc } from 'firebase/firestore';
@@ -14,6 +14,8 @@ interface MassivePredictionProps {
 type SortKey = 'id_user' | 'profesion' | 'situacion_laboral' | 'probability';
 type SortDir = 'asc' | 'desc';
 
+const ROWS_PER_PAGE = 100;
+
 export function MassivePrediction({ data, setData }: MassivePredictionProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'Todos' | 'Sí' | 'No'>('Todos');
@@ -21,8 +23,14 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
   const [sortKey, setSortKey] = useState<SortKey>('id_user');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, searchQuery, sortKey, sortDir]);
 
   const processFile = async (file: File, isAddition = false) => {
     setIsLoading(true);
@@ -68,13 +76,11 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
     if (e.dataTransfer.files?.length) processFile(e.dataTransfer.files[0]);
   };
 
-  // Sorting handler
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortKey(key); setSortDir('asc'); }
   };
 
-  // Filter + Search + Sort
   const filteredData = data
     .filter(lead => filterStatus === 'Todos' || lead.prediction?.status === filterStatus)
     .filter(lead => {
@@ -119,6 +125,9 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
       if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
       return 0;
     });
+
+  const totalPages = Math.ceil(filteredData.length / ROWS_PER_PAGE);
+  const paginatedData = filteredData.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
 
   const downloadCSV = () => {
     const csvData = filteredData.map(l => ({
@@ -261,7 +270,7 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
 
       {/* Table */}
       <div className="glass-panel" style={{ overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto', minHeight: '300px' }}>
           <table className="leads-table">
             <thead>
               <tr>
@@ -281,7 +290,7 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
               </tr>
             </thead>
             <tbody>
-              {filteredData.map((lead, idx) => {
+              {paginatedData.map((lead, idx) => {
                 const prob = lead.prediction?.probability || 0;
                 const status = lead.prediction?.status || 'No';
                 return (
@@ -336,6 +345,63 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
             </div>
           )}
         </div>
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div style={{
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            padding: '1rem 1.5rem', 
+            borderTop: '1px solid var(--card-border)',
+            background: 'rgba(0,0,0,0.2)'
+          }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              Mostrando {(currentPage - 1) * ROWS_PER_PAGE + 1} - {Math.min(currentPage * ROWS_PER_PAGE, filteredData.length)} de {filteredData.length} leads
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                style={{
+                  background: currentPage === 1 ? 'transparent' : 'rgba(255,255,255,0.05)',
+                  border: '1px solid',
+                  borderColor: currentPage === 1 ? 'transparent' : 'var(--card-border)',
+                  color: currentPage === 1 ? 'var(--text-muted)' : 'white',
+                  opacity: currentPage === 1 ? 0.5 : 1,
+                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  padding: '6px',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <div style={{ display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: '0.85rem', fontWeight: 500 }}>
+                Página {currentPage} de {totalPages}
+              </div>
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                style={{
+                  background: currentPage === totalPages ? 'transparent' : 'rgba(255,255,255,0.05)',
+                  border: '1px solid',
+                  borderColor: currentPage === totalPages ? 'transparent' : 'var(--card-border)',
+                  color: currentPage === totalPages ? 'var(--text-muted)' : 'white',
+                  opacity: currentPage === totalPages ? 0.5 : 1,
+                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  padding: '6px',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
