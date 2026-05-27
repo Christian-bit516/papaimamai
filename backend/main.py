@@ -188,42 +188,119 @@ def normalize_value(feature: str, value: str) -> str:
 @app.on_event("startup")
 def train_model():
     global model, encoders
-    print("[STARTUP] Entrenando Gradient Boosting con dataset sintetico enriquecido (10 variables)...")
-    np.random.seed(42)
-    N = 3000
+    print("[STARTUP] Intentando descargar datos reales de Firebase...")
+    
+    import urllib.request
+    import json
+    
+    url = "https://firestore.googleapis.com/v1/projects/meme-bea08/databases/(default)/documents/leads"
+    all_docs = []
+    
+    try:
+        while url:
+            req = urllib.request.Request(url)
+            with urllib.request.urlopen(req) as response:
+                data = json.loads(response.read().decode('utf-8'))
+                docs = data.get('documents', [])
+                all_docs.extend(docs)
+                
+                next_token = data.get('nextPageToken')
+                if next_token:
+                    url = f"https://firestore.googleapis.com/v1/projects/meme-bea08/databases/(default)/documents/leads?pageToken={next_token}"
+                else:
+                    url = None
+    except Exception as e:
+        print(f"[ERROR] No se pudo conectar a Firebase: {e}")
+    
+    N = len(all_docs)
+    
+    if N > 100:
+        print(f"[STARTUP] Se encontraron {N} leads reales. Entrenando modelo con base de datos...")
+        rows = {
+            'asistencia_webinars': [],
+            'clicks_bolsa_trabajo': [],
+            'situacion_laboral': [],
+            'clicks_marketing': [],
+            'profesion': [],
+            'recencia_interaccion': [],
+            'cliente_antiguo': [],
+            'ubicacion_region': [],
+            'tipo_entidad_interes': [],
+            'estado_postulacion_historica': []
+        }
+        
+        for doc in all_docs:
+            fields = doc.get('fields', {})
+            
+            def get_val(f_name, default, val_type='stringValue'):
+                if f_name in fields:
+                    if val_type in fields[f_name]:
+                        return fields[f_name][val_type]
+                    elif 'integerValue' in fields[f_name]:
+                        return int(fields[f_name]['integerValue'])
+                    elif 'doubleValue' in fields[f_name]:
+                        return float(fields[f_name]['doubleValue'])
+                    elif 'stringValue' in fields[f_name]:
+                        v = fields[f_name]['stringValue']
+                        if val_type == 'integerValue':
+                            try: return int(v)
+                            except: return default
+                        return v
+                return default
 
-    # Generate balanced synthetic dataset covering all combinations
-    rows = {
-        'asistencia_webinars':  np.random.choice(CATEGORIES['asistencia_webinars'], N, p=[0.45, 0.35, 0.20]),
-        'clicks_bolsa_trabajo': np.random.choice(CATEGORIES['clicks_bolsa_trabajo'], N, p=[0.50, 0.30, 0.20]),
-        'situacion_laboral':    np.random.choice(CATEGORIES['situacion_laboral'], N, p=[0.35, 0.30, 0.35]),
-        'clicks_marketing':     np.random.choice(CATEGORIES['clicks_marketing'], N, p=[0.40, 0.35, 0.25]),
-        'profesion':            np.random.choice(CATEGORIES['profesion'], N),
-        'recencia_interaccion': np.random.randint(0, 180, N), # Días
-        'cliente_antiguo':      np.random.binomial(1, 0.15, N),
-        'ubicacion_region':     np.random.choice(CATEGORIES['ubicacion_region'], N),
-        'tipo_entidad_interes': np.random.choice(CATEGORIES['tipo_entidad_interes'], N),
-        'estado_postulacion_historica': np.random.choice(CATEGORIES['estado_postulacion_historica'], N),
-    }
+            rows['asistencia_webinars'].append(get_val('asistencia_webinars', '0_eventos'))
+            rows['clicks_bolsa_trabajo'].append(get_val('clicks_bolsa_trabajo', '0_clicks'))
+            rows['situacion_laboral'].append(get_val('situacion_laboral', 'independiente'))
+            rows['clicks_marketing'].append(get_val('clicks_marketing', 'nula'))
+            rows['profesion'].append(get_val('profesion', 'Otro'))
+            rows['recencia_interaccion'].append(get_val('recencia_interaccion', 999, 'integerValue'))
+            rows['cliente_antiguo'].append(get_val('cliente_antiguo', 0, 'integerValue'))
+            rows['ubicacion_region'].append(get_val('ubicacion_region', 'Otro'))
+            rows['tipo_entidad_interes'].append(get_val('tipo_entidad_interes', 'Otro'))
+            rows['estado_postulacion_historica'].append(get_val('estado_postulacion_historica', 'Otro'))
+    else:
+        print("[STARTUP] Pocos datos en Firebase (o error). Usando datos sintéticos...")
+        np.random.seed(42)
+        N = 3000
 
-    # Compute deterministic scores for each synthetic lead
+        rows = {
+            'asistencia_webinars':  np.random.choice(CATEGORIES['asistencia_webinars'], N, p=[0.45, 0.35, 0.20]),
+            'clicks_bolsa_trabajo': np.random.choice(CATEGORIES['clicks_bolsa_trabajo'], N, p=[0.50, 0.30, 0.20]),
+            'situacion_laboral':    np.random.choice(CATEGORIES['situacion_laboral'], N, p=[0.35, 0.30, 0.35]),
+            'clicks_marketing':     np.random.choice(CATEGORIES['clicks_marketing'], N, p=[0.40, 0.35, 0.25]),
+            'profesion':            np.random.choice(CATEGORIES['profesion'], N),
+            'recencia_interaccion': np.random.randint(0, 180, N), # Días
+            'cliente_antiguo':      np.random.binomial(1, 0.15, N),
+            'ubicacion_region':     np.random.choice(CATEGORIES['ubicacion_region'], N),
+            'tipo_entidad_interes': np.random.choice(CATEGORIES['tipo_entidad_interes'], N),
+            'estado_postulacion_historica': np.random.choice(CATEGORIES['estado_postulacion_historica'], N),
+        }
+
+    # Compute deterministic scores
     scores = np.array([
         get_deterministic_score({k: rows[k][i] for k in rows})
         for i in range(N)
     ])
 
-    # Convert score → purchase probability with realistic noise
+    # Convert score → purchase probability with realistic noise to generate target 'y'
     p_buy = np.clip(scores / 100.0, 0.02, 0.98)
     noise_strength = 0.15 * (1 - np.abs(p_buy - 0.5) * 2)
     p_noisy = np.clip(p_buy + np.random.normal(0, noise_strength, N), 0.02, 0.98)
+    
+    # Target variable (0 o 1)
+    np.random.seed(42) # Mantener consistencia si falla
     y = np.random.binomial(1, p_noisy)
 
     # Encode features
     import pandas as pd
     df = pd.DataFrame(rows)
+    
+    # Manejar posibles valores no normalizados en BD
+    for col in [f for f in FEATURES if f not in ('recencia_interaccion', 'cliente_antiguo')]:
+        df[col] = df[col].apply(lambda x: normalize_value(col, x))
+
     X = df.copy()
     
-    # Numéricas pasan directo
     numeric_features = ['recencia_interaccion', 'cliente_antiguo']
     categorical_features = [f for f in FEATURES if f not in numeric_features]
     
@@ -244,10 +321,10 @@ def train_model():
         subsample=0.8,
         random_state=42
     )
-    model = CalibratedClassifierCV(base, method='isotonic', cv=5)
+    model = CalibratedClassifierCV(base, method='isotonic', cv=min(5, N))
     model.fit(X.values, y)
 
-    print("[OK] Modelo entrenado exitosamente con 10 variables.")
+    print(f"[OK] Modelo entrenado exitosamente con {N} registros.")
 
 
 def _ml_predict_single(row: dict) -> float:
