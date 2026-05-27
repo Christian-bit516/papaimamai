@@ -11,19 +11,43 @@ import {
   Search, 
   Loader, 
   LayoutDashboard, 
-  Zap
+  Zap,
+  LogOut
 } from 'lucide-react';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from './firebase';
+import { Login } from './components/Login';
+
 
 function App() {
   const [activeTab, setActiveTab] = useState<'analytics' | 'massive' | 'manual'>('massive');
   const [dataset, setDataset] = useState<ProcessedLead[]>([]);
   const [isLoadingDB, setIsLoadingDB] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
+    const storedUser = sessionStorage.getItem('capacitaia_session');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Error parsing stored session", e);
+      }
+    }
+    setCheckingAuth(false);
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setDataset([]);
+      setIsLoadingDB(false);
+      return;
+    }
+
     const fetchLeads = async () => {
+      setIsLoadingDB(true);
       try {
         const querySnapshot = await getDocs(collection(db, 'leads'));
         const rawLeads: ProcessedLead[] = [];
@@ -72,7 +96,13 @@ function App() {
       }
     };
     fetchLeads();
-  }, []);
+  }, [user]);
+
+  const handleLogout = () => {
+    setUser(null);
+    sessionStorage.removeItem('capacitaia_session');
+  };
+
 
   const clearDatabase = async () => {
     if (confirm("¿Estás seguro de que quieres borrar TODOS los leads de la base de datos? Esta acción no se puede deshacer.")) {
@@ -92,6 +122,35 @@ function App() {
       }
     }
   };
+
+  if (checkingAuth) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        backgroundColor: 'var(--main-bg)',
+        color: 'var(--text-muted)',
+        gap: '1rem'
+      }}>
+        <Loader className="animate-spin" size={48} color="var(--accent-orange)" />
+        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.95rem' }}>Inicializando CapacitaIA...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Login
+        onLoginSuccess={(userData) => {
+          setUser(userData);
+          sessionStorage.setItem('capacitaia_session', JSON.stringify(userData));
+        }}
+      />
+    );
+  }
 
   return (
     <div className="app-layout">
@@ -131,12 +190,44 @@ function App() {
             </button>
           </nav>
 
-          <div className="user-profile">
-            <div className="avatar">JD</div>
-            <div className="user-info">
-              <h4>John Doe</h4>
-              <p>My Account</p>
+          <div className="user-profile" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'stretch' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <div className="avatar">
+                {user.email ? user.email.substring(0, 2).toUpperCase() : 'U'}
+              </div>
+              <div className="user-info" style={{ minWidth: 0 }}>
+                <h4 style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                  {user.isDemo ? 'Usuario Demo' : user.email.split('@')[0]}
+                </h4>
+                <p style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                  {user.email}
+                </p>
+              </div>
             </div>
+            <button 
+              onClick={handleLogout}
+              style={{
+                width: '100%',
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                color: '#ef4444',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'}
+              onMouseOut={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'}
+            >
+              <LogOut size={14} />
+              Cerrar Sesión
+            </button>
           </div>
         </aside>
       )}
