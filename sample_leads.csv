@@ -1,0 +1,11 @@
+id_user,asistencia_webinars,clicks_bolsa_trabajo,situacion_laboral,clicks_marketing,profesion
+USR001,3_o_mas,mas_de_5,independiente,alta,Abogado
+USR002,1_a_2,0_clicks,sector_privado,nula,Ingeniero
+USR003,0_eventos,1_a_5,sector_publico,media,Administrador
+USR004,3_o_mas,mas_de_5,sector_publico,alta,Economista
+USR005,0_eventos,0_clicks,sector_privado,nula,Arquitecto
+USR006,1_a_2,1_a_5,independiente,media,Contador
+USR007,3_o_mas,1_a_5,sector_publico,alta,Abogado
+USR008,1_a_2,mas_de_5,sector_publico,media,Administrador
+USR009,0_eventos,0_clicks,independiente,nula,Profesor
+USR010,3_o_mas,0_clicks,sector_privado,alta,Economista
