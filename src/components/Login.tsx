@@ -9,7 +9,6 @@ import {
   UserPlus,
   Eye,
   EyeOff,
-  Sparkles,
   AlertCircle,
   Shield
 } from 'lucide-react';
@@ -103,13 +102,6 @@ export function Login({ onLoginSuccess }: LoginProps) {
     }
   };
 
-  const handleDemo = () => {
-    onLoginSuccess({
-      email: 'demo@capacitaia.edu',
-      displayName: 'Usuario Demo',
-      isDemo: true,
-    });
-  };
 
   return (
     <div className="login-bg">
@@ -222,18 +214,6 @@ export function Login({ onLoginSuccess }: LoginProps) {
           </button>
         </form>
 
-        {/* ── Divider ── */}
-        <div className="login-divider">
-          <span className="login-divider-line" />
-          <span>O TAMBIÉN</span>
-          <span className="login-divider-line" />
-        </div>
-
-        {/* ── Demo bypass ── */}
-        <button type="button" className="login-demo-btn" onClick={handleDemo}>
-          <Sparkles size={15} color="var(--accent-orange)" />
-          Ingresar como Demo
-        </button>
 
         {/* ── Footer ── */}
         <p className="login-footer">
