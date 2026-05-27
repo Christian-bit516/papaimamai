@@ -197,7 +197,8 @@ def train_model():
     all_docs = []
     
     try:
-        while url:
+        pages = 0
+        while url and pages < 10: # Límite de 10 páginas para no bloquear el inicio
             req = urllib.request.Request(url)
             with urllib.request.urlopen(req) as response:
                 data = json.loads(response.read().decode('utf-8'))
@@ -205,6 +206,7 @@ def train_model():
                 all_docs.extend(docs)
                 
                 next_token = data.get('nextPageToken')
+                pages += 1
                 if next_token:
                     url = f"https://firestore.googleapis.com/v1/projects/meme-bea08/databases/(default)/documents/leads?pageToken={next_token}"
                 else:
