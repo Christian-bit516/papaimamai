@@ -4,7 +4,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   LineChart, Line, BarChart, Bar
 } from 'recharts';
-import { CheckCircle, XCircle, TrendingUp, Users, Target, Percent } from 'lucide-react';
+import { CheckCircle, TrendingUp, Users, Target, Percent } from 'lucide-react';
 
 interface AnalyticsChartsProps {
   data: ProcessedLead[];
