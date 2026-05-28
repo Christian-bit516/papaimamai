@@ -3,13 +3,13 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB-Q-bR9Lb4ljyLaEuBCn4rzNCowH0CGCQ",
-  authDomain: "meme-bea08.firebaseapp.com",
-  projectId: "meme-bea08",
-  storageBucket: "meme-bea08.firebasestorage.app",
-  messagingSenderId: "840050746214",
-  appId: "1:840050746214:web:fabca2c133ab6e6ae59ea7",
-  measurementId: "G-CNNHY4QMHJ"
+  apiKey: "AIzaSyD--dlFyJyv1Ku7-iEZ28MfaoJ-UL2acUM",
+  authDomain: "proyecto-prediccion-d8e98.firebaseapp.com",
+  projectId: "proyecto-prediccion-d8e98",
+  storageBucket: "proyecto-prediccion-d8e98.firebasestorage.app",
+  messagingSenderId: "556170393049",
+  appId: "1:556170393049:web:44eae12ced1d74ee6515c8",
+  measurementId: "G-KPRBRG1VHR"
 };
 
 export const app = initializeApp(firebaseConfig);
