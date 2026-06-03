@@ -1,7 +1,7 @@
 const clear = async () => {
     let token = '';
     do {
-        const url = `https://firestore.googleapis.com/v1/projects/meme-bea08/databases/(default)/documents/leads${token ? '?pageToken=' + token : ''}`;
+        const url = `https://firestore.googleapis.com/v1/projects/proyecto-prediccion-d8e98/databases/(default)/documents/leads${token ? '?pageToken=' + token : ''}`;
         const res = await fetch(url);
         const data = await res.json();
         if (data.documents) {

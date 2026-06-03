@@ -4,6 +4,7 @@ import type { ProcessedLead } from './types';
 import { MassivePrediction } from './components/MassivePrediction';
 import { AnalyticsCharts } from './components/AnalyticsCharts';
 import { ManualSimulation } from './components/ManualSimulation';
+import { HistoricalData } from './components/HistoricalData';
 import { 
   Database, 
   Menu,
@@ -12,6 +13,7 @@ import {
   Loader, 
   LayoutDashboard, 
   Zap,
+  BookOpen,
   LogOut
 } from 'lucide-react';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
@@ -20,7 +22,7 @@ import { Login } from './components/Login';
 
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'analytics' | 'massive' | 'manual'>('massive');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'massive' | 'manual' | 'historical'>('massive');
   const [dataset, setDataset] = useState<ProcessedLead[]>([]);
   const [isLoadingDB, setIsLoadingDB] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -180,6 +182,14 @@ function App() {
               <Database size={18} />
               Predicción Masiva
             </button>
+
+            <button 
+              className={`nav-item ${activeTab === 'historical' ? 'active' : ''}`}
+              onClick={() => setActiveTab('historical')}
+            >
+              <BookOpen size={18} />
+              Datos Históricos
+            </button>
             
             <button 
               className={`nav-item ${activeTab === 'manual' ? 'active' : ''}`}
@@ -248,6 +258,7 @@ function App() {
             <h1>
               {activeTab === 'analytics' && 'Dashboard Overview'}
               {activeTab === 'massive' && 'Segments & Mass Upload'}
+              {activeTab === 'historical' && 'Datos Históricos'}
               {activeTab === 'manual' && 'Contact Simulation'}
             </h1>
           </div>
@@ -284,6 +295,7 @@ function App() {
           <>
             {activeTab === 'analytics' && <AnalyticsCharts data={dataset} />}
             {activeTab === 'massive' && <MassivePrediction data={dataset} setData={setDataset} />}
+            {activeTab === 'historical' && <HistoricalData />}
             {activeTab === 'manual' && <ManualSimulation />}
           </>
         )}

@@ -292,8 +292,7 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
                 <th>Cliente Ant.</th>
                 <th>Entidad Int.</th>
                 <th>Hist. Postulación</th>
-                <th onClick={() => handleSort('probability')} className="sortable">Probabilidad <SortIcon col="probability" /></th>
-                <th>Estado</th>
+                <th onClick={() => handleSort('probability')} className="sortable">Estado <SortIcon col="probability" /></th>
               </tr>
             </thead>
             <tbody>
@@ -311,26 +310,12 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
                     <td>
                       <span className="tag">{lead.recencia_interaccion !== undefined ? `${lead.recencia_interaccion}d` : '—'}</span>
                     </td>
-                    <td><span className="tag">{(lead.asistencia_webinars || '—').replace(/_/g, ' ')}</span></td>
+                    <td><span className="tag">{String(lead.asistencia_webinars || '—').replace(/_/g, ' ')}</span></td>
                     <td><span className="tag">{lead.clicks_bolsa_trabajo || '—'}</span></td>
                     <td><span className="tag">{lead.clicks_marketing || '—'}</span></td>
                     <td><span className="tag">{lead.cliente_antiguo == 1 ? 'Sí' : 'No'}</span></td>
                     <td><span className="tag">{lead.tipo_entidad_interes || '—'}</span></td>
                     <td><span className="tag">{lead.estado_postulacion_historica || '—'}</span></td>
-                    <td>
-                      <div className="prob-cell">
-                        <div className="prob-bar-bg">
-                          <div
-                            className="prob-bar-fill"
-                            style={{
-                              width: prob + '%',
-                              background: status === 'Sí' ? '#10b981' : '#ef4444'
-                            }}
-                          />
-                        </div>
-                        <span className="prob-label">{prob}%</span>
-                      </div>
-                    </td>
                     <td>
                       <span className="status-badge" style={{
                           background: status === 'Sí' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
