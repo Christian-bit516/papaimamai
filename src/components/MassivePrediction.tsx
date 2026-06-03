@@ -297,7 +297,6 @@ export function MassivePrediction({ data, setData }: MassivePredictionProps) {
             </thead>
             <tbody>
               {paginatedData.map((lead, idx) => {
-                const prob = lead.prediction?.probability || 0;
                 const status = lead.prediction?.status || 'No';
                 return (
                   <tr key={idx} className="table-row">
